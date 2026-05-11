@@ -92,13 +92,13 @@ TYPELIB binlog_checksum_typelib= CREATE_TYPELIB_FOR(binlog_checksum_type_names);
 */
 #define FMT_G_BUFSIZE(PREC) (3 + (PREC) + 5 + 1)
 
-/* 
+/*
    replication event checksum is introduced in the following "checksum-home" version.
    The checksum-aware servers extract FD's version to decide whether the FD event
    carries checksum info.
 
-   TODO: correct the constant when it has been determined 
-   (which main tree to push and when) 
+   TODO: correct the constant when it has been determined
+   (which main tree to push and when)
 */
 const Version checksum_version_split_mysql(5, 6, 1);
 const Version checksum_version_split_mariadb(5, 3, 0);
@@ -287,7 +287,7 @@ char *str_to_hex(char *to, const uchar *from, size_t len)
 uint32 binlog_get_compress_len(uint32 len)
 {
     /* 5 for the begin content, 1 reserved for a '\0'*/
-    return ALIGN_SIZE((BINLOG_COMPRESSED_HEADER_LEN + BINLOG_COMPRESSED_ORIGINAL_LENGTH_MAX_BYTES) 
+    return ALIGN_SIZE((BINLOG_COMPRESSED_HEADER_LEN + BINLOG_COMPRESSED_ORIGINAL_LENGTH_MAX_BYTES)
                         + compressBound(len) + 1);
 }
 
@@ -326,7 +326,7 @@ int binlog_buf_compress(const uchar *src, uchar *dst, uint32 len, uint32 *comlen
     dst[2]= uchar(len);
     lenlen= 2;
   }
-  else 
+  else
   {
     dst[1]= uchar(len);
     lenlen= 1;
@@ -396,19 +396,19 @@ query_event_uncompress(const Format_description_log_event *description_event,
                           (contain_checksum ? BINLOG_CHECKSUM_LEN : 0));
   uint32 un_len=  binlog_get_uncompress_len(tmp);
 
-  // bad event 
+  // bad event
   if (comp_len < 0 || un_len == 0)
     return 1;
 
   *newlen= (ulong)(tmp - src) + un_len;
   if (contain_checksum)
     *newlen+= BINLOG_CHECKSUM_LEN;
-  
+
   uint32 alloc_size= (uint32)ALIGN_SIZE(*newlen);
-  
-  if (alloc_size <= buf_size) 
+
+  if (alloc_size <= buf_size)
     new_dst= buf;
-  else 
+  else
   {
     new_dst= (uchar *) my_malloc(PSI_INSTRUMENT_ME, alloc_size, MYF(MY_WME));
     if (!new_dst)
@@ -481,7 +481,7 @@ row_log_event_uncompress(const Format_description_log_event *description_event,
     type=
       (Log_event_type)(type - WRITE_ROWS_COMPRESSED_EVENT + WRITE_ROWS_EVENT);
   }
-  else 
+  else
   {
     /* get the uncompressed event type */
     type= (Log_event_type)
@@ -516,9 +516,9 @@ row_log_event_uncompress(const Format_description_log_event *description_event,
     *newlen+= BINLOG_CHECKSUM_LEN;
 
   size_t alloc_size= ALIGN_SIZE(*newlen);
-  
+
   *is_malloc= false;
-  if (alloc_size <= buf_size) 
+  if (alloc_size <= buf_size)
   {
     new_dst= buf;
   }
@@ -1015,7 +1015,7 @@ Log_event* Log_event::read_log_event(const uchar *buf, size_t event_len,
     In the RL case, the alg is kept in FD_e (@fdle) which is reset
     to the newer read-out event after its execution with possibly new alg descriptor.
     Therefore in a typical sequence of RL:
-    {FD_s^0, FD_m, E_m^1} E_m^1 
+    {FD_s^0, FD_m, E_m^1} E_m^1
     will be verified with (A) of FD_m.
 
     See legends definition on MYSQL_BIN_LOG::relay_log_checksum_alg docs
@@ -1035,7 +1035,7 @@ Log_event* Log_event::read_log_event(const uchar *buf, size_t event_len,
       DBUG_PRINT("info", ("Corrupt the event at Log_event::read_log_event(char*,...): byte on position %d", debug_cor_pos));
       DBUG_SET("-d,corrupt_read_log_event_char");
     }
-  );                                                 
+  );
   if (crc_check && event_checksum_test(const_cast<uchar*>(buf), event_len, alg))
   {
 #ifdef MYSQL_CLIENT
@@ -1225,7 +1225,7 @@ Log_event *Log_event::read_log_event_no_checksum(
       ev= new Format_description_log_event(buf, static_cast<uint>(event_len),
                                            fdle);
       break;
-#if defined(HAVE_REPLICATION) 
+#if defined(HAVE_REPLICATION)
     case WRITE_ROWS_EVENT_V1:
     case WRITE_ROWS_EVENT:
       ev= new Write_rows_log_event(buf, event_len, fdle);
@@ -1360,7 +1360,7 @@ exit:
     DBUG_RETURN(0);
 #endif
   }
-  DBUG_RETURN(ev);  
+  DBUG_RETURN(ev);
 }
 
 
@@ -1477,7 +1477,7 @@ get_str_len_and_pointer(const Log_event::Byte **src,
   return 0;
 }
 
-static void copy_str_and_move(const char **src, Log_event::Byte **dst, 
+static void copy_str_and_move(const char **src, Log_event::Byte **dst,
                               size_t len)
 {
   memcpy(*dst, *src, len);
@@ -1613,7 +1613,7 @@ Query_log_event::Query_log_event(const uchar *buf, uint event_len,
   */
 
   /* variable-part: the status vars; only in MySQL 5.0  */
-  
+
   start= (Log_event::Byte*) (buf+post_header_len);
   end= (const Log_event::Byte*) (start+status_vars_len);
   for (const Log_event::Byte* pos= start; pos < end;)
@@ -1875,7 +1875,7 @@ Query_log_event::Query_log_event(const uchar *buf, uint event_len,
     my_alloc call above? /sven
   */
 
-  /* A 2nd variable part; this is common to all versions */ 
+  /* A 2nd variable part; this is common to all versions */
   memcpy((char*) start, end, data_len);          // Copy db and query
   start[data_len]= '\0';              // End query with \0 (For safetly)
   db= (char *)start;
@@ -2479,7 +2479,7 @@ Format_description_log_event::is_version_before_checksum(const master_version_sp
 /**
    @param buf buffer holding serialized FD event
    @param len netto (possible checksum is stripped off) length of the event buf
-   
+
    @return  the version-safe checksum alg descriptor where zero
             designates no checksum, 255 - the orginator is
             checksum-unaware (effectively no checksum) and the actual
@@ -2497,7 +2497,7 @@ enum_binlog_checksum_alg get_checksum_alg(const uchar *buf, size_t len)
          buf + LOG_EVENT_MINIMAL_HEADER_LEN + ST_SERVER_VER_OFFSET,
          ST_SERVER_VER_LEN);
   version[ST_SERVER_VER_LEN - 1]= 0;
-  
+
   Format_description_log_event::master_version_split version_split(version);
   ret= Format_description_log_event::is_version_before_checksum(&version_split)
     ? BINLOG_CHECKSUM_ALG_UNDEF
@@ -3016,7 +3016,7 @@ User_var_log_event(const uchar *buf, uint event_len,
   if (is_null)
   {
     val_len= 0;
-    val= 0;  
+    val= 0;
   }
   else
   {
@@ -3073,7 +3073,7 @@ Append_block_log_event(const uchar *buf, uint len,
   :Log_event(buf, description_event),block(0)
 {
   DBUG_ENTER("Append_block_log_event::Append_block_log_event(char*,...)");
-  uint8 common_header_len= description_event->common_header_len; 
+  uint8 common_header_len= description_event->common_header_len;
   uint8 append_block_header_len=
     description_event->post_header_len[APPEND_BLOCK_EVENT-1];
   uint total_header_len= common_header_len+append_block_header_len;
@@ -3476,7 +3476,7 @@ int Rows_log_event::get_data_size()
     data_size+= no_bytes_in_export_map(&m_cols_ai);
 
   data_size+= (uint) (m_rows_cur - m_rows_buf);
-  return data_size; 
+  return data_size;
 }
 
 
@@ -3532,34 +3532,34 @@ bool Annotate_rows_log_event::is_valid() const
 
 /**
   @page How replication of field metadata works.
-  
-  When a table map is created, the master first calls 
-  Table_map_log_event::save_field_metadata() which calculates how many 
-  values will be in the field metadata. Only those fields that require the 
-  extra data are added. The method also loops through all of the fields in 
+
+  When a table map is created, the master first calls
+  Table_map_log_event::save_field_metadata() which calculates how many
+  values will be in the field metadata. Only those fields that require the
+  extra data are added. The method also loops through all of the fields in
   the table calling the method Field::save_field_metadata() which returns the
   values for the field that will be saved in the metadata and replicated to
   the slave. Once all fields have been processed, the table map is written to
   the binlog adding the size of the field metadata and the field metadata to
   the end of the body of the table map.
 
-  When a table map is read on the slave, the field metadata is read from the 
-  table map and passed to the table_def class constructor which saves the 
-  field metadata from the table map into an array based on the type of the 
-  field. Field metadata values not present (those fields that do not use extra 
-  data) in the table map are initialized as zero (0). The array size is the 
+  When a table map is read on the slave, the field metadata is read from the
+  table map and passed to the table_def class constructor which saves the
+  field metadata from the table map into an array based on the type of the
+  field. Field metadata values not present (those fields that do not use extra
+  data) in the table map are initialized as zero (0). The array size is the
   same as the columns for the table on the slave.
 
-  Additionally, values saved for field metadata on the master are saved as a 
+  Additionally, values saved for field metadata on the master are saved as a
   string of bytes (uchar) in the binlog. A field may require 1 or more bytes
-  to store the information. In cases where values require multiple bytes 
-  (e.g. values > 255), the endian-safe methods are used to properly encode 
+  to store the information. In cases where values require multiple bytes
+  (e.g. values > 255), the endian-safe methods are used to properly encode
   the values on the master and decode them on the slave. When the field
   metadata values are captured on the slave, they are stored in an array of
   type uint16. This allows the least number of casts to prevent casting bugs
   when the field metadata is used in comparisons of field attributes. When
   the field metadata is used for calculating addresses in pointer math, the
-  type used is uint32. 
+  type used is uint32.
 */
 
 /*
@@ -3722,8 +3722,9 @@ Table_map_log_event::~Table_map_log_event()
    @param[in]  field   SIGNEDNESS field in table_map_event.
    @param[in]  length  length of the field
  */
+using Optional_column_metadata= Table_map_log_event::Optional_metadata_fields::Column_metadata;
 static void parse_signedness(
-  Dynamic_array<Table_map_log_event::Optional_metadata_fields::Column_metadata>& column_metadata,
+  Dynamic_array<Optional_column_metadata>& column_metadata,
   unsigned char *field, unsigned int length)
 {
   unsigned char *field_end= field + length;
@@ -3795,7 +3796,7 @@ static void parse_enum_and_set_default_charset(
    @param[in]  length  length of the field
  */
 static void parse_column_charset(
-  Dynamic_array<Table_map_log_event::Optional_metadata_fields::Column_metadata>& column_metadata,
+  Dynamic_array<Optional_column_metadata>& column_metadata,
   unsigned char *field, unsigned int length)
 {
   unsigned char* p= field;
@@ -3815,7 +3816,7 @@ static void parse_column_charset(
    @param[in]  length  length of the field
  */
 static void parse_enum_and_set_column_charset(
-  Dynamic_array<Table_map_log_event::Optional_metadata_fields::Column_metadata>& column_metadata,
+  Dynamic_array<Optional_column_metadata>& column_metadata,
   unsigned char *field, unsigned int length)
 {
   unsigned char* p= field;
@@ -3836,7 +3837,7 @@ static void parse_enum_and_set_column_charset(
    @param[in]  length  length of the field
  */
 static bool parse_column_name(MEM_ROOT *root,
-  Dynamic_array<Table_map_log_event::Optional_metadata_fields::Column_metadata>& column_metadata,
+  Dynamic_array<Optional_column_metadata>& column_metadata,
   unsigned char *field, unsigned int length)
 {
   unsigned int col = 0;
@@ -3863,8 +3864,7 @@ static bool parse_column_name(MEM_ROOT *root,
    @param[in]  column_type      type of the given column (i.e. MYSQL_TYPE_XYZ)
  */
 static void parse_set_str_value(
-    Dynamic_array<Table_map_log_event::Optional_metadata_fields::Column_metadata>
-        &column_metadata,
+    Dynamic_array<Optional_column_metadata> &column_metadata,
     unsigned char *field, unsigned int length,
     uchar column_type)
 {
@@ -3913,8 +3913,7 @@ static void parse_set_str_value(
    @param[in]  length  length of the field
  */
 static void parse_geometry_type(
-    Dynamic_array<Table_map_log_event::Optional_metadata_fields::Column_metadata>
-      &column_metadata,
+    Dynamic_array<Optional_column_metadata> &column_metadata,
     unsigned char *field, unsigned int length)
 {
   unsigned char* p= field;
@@ -3938,8 +3937,7 @@ static void parse_geometry_type(
    @param[in]  length  length of the field
  */
 static void parse_simple_pk(
-    Dynamic_array<Table_map_log_event::Optional_metadata_fields::Column_metadata>
-        &column_metadata,
+    Dynamic_array<Optional_column_metadata> &column_metadata,
     unsigned char *field, unsigned int length)
 {
   unsigned char* p= field;
@@ -3957,8 +3955,7 @@ static void parse_simple_pk(
    @param[in]  length  length of the field
  */
 static void parse_pk_with_prefix(
-    Dynamic_array<Table_map_log_event::Optional_metadata_fields::Column_metadata>
-        &column_metadata,
+    Dynamic_array<Optional_column_metadata> &column_metadata,
     unsigned char *field, unsigned int length)
 {
   unsigned char* p= field;
