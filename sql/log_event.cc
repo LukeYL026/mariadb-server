@@ -3860,16 +3860,18 @@ static bool parse_column_name(MEM_ROOT *root,
 
    @param[out] column_metadata store all column metadata here (including
                set/enum strings)
-   @param[in]  field   SET_STR_VALUE/ENUM_STR_VALUE field in table_map_event.
-   @param[in]  length  length of the field
-   @param[in]  column_type      type of the given column (i.e. MYSQL_TYPE_XYZ)
+   @param[in]  field      SET_STR_VALUE/ENUM_STR_VALUE field in table_map_event.
+   @param[in]  length     length of the field
+   @param[in]  column_type  type of the given column (i.e. MYSQL_TYPE_XYZ)
+   @param[in]  var_to_set   pointer-to-member selecting which str_vector to fill
  */
 static void parse_set_str_value(
     Dynamic_array<Optional_column_metadata> &column_metadata,
     unsigned char *field, unsigned int length,
-    uchar column_type)
+    uchar column_type,
+    Table_map_log_event::Optional_metadata_fields::str_vector
+        Optional_column_metadata::*var_to_set)
 {
-  using str_vector = Table_map_log_event::Optional_metadata_fields::str_vector;
   unsigned char* p= field;
 
   for (uint col= 0; p < field + length && col < column_metadata.size(); col++)
@@ -3878,20 +3880,7 @@ static void parse_set_str_value(
       continue;
 
     unsigned int count= net_field_length(&p);
-    str_vector* column_strings;
-    if (column_type == MYSQL_TYPE_SET)
-    {
-      column_strings = &column_metadata.at(col).set_str_values;
-    }
-    else if (column_type == MYSQL_TYPE_ENUM)
-    {
-      column_strings = &column_metadata.at(col).enum_str_values;
-    }
-    else
-    {
-      DBUG_ASSERT(0);
-      return;
-    }
+    auto* column_strings= &(column_metadata.at(col).*var_to_set);
 
     if (column_strings->reserve(count))
       return;
@@ -4029,10 +4018,12 @@ Optional_metadata_fields(MEM_ROOT *root, uint master_columns,
         goto error;
       break;
     case SET_STR_VALUE:
-      parse_set_str_value(m_column_metadata, field, len, MYSQL_TYPE_SET);
+      parse_set_str_value(m_column_metadata, field, len, MYSQL_TYPE_SET,
+                          &Optional_column_metadata::set_str_values);
       break;
     case ENUM_STR_VALUE:
-      parse_set_str_value(m_column_metadata, field, len, MYSQL_TYPE_ENUM);
+      parse_set_str_value(m_column_metadata, field, len, MYSQL_TYPE_ENUM,
+                          &Optional_column_metadata::enum_str_values);
       break;
     case GEOMETRY_TYPE:
       parse_geometry_type(m_column_metadata, field, len);
