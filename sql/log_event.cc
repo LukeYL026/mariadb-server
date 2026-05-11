@@ -3972,6 +3972,7 @@ Optional_metadata_fields(MEM_ROOT *root, uint master_columns,
 
   allocation_error= 0;
 
+  // initializing the elements of m_column_metadata and their types
   for (uint i= 0; i < master_columns; i++)
   {
     Column_metadata col{};
