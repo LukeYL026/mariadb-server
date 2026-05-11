@@ -3727,7 +3727,8 @@ static void parse_signedness(
   Dynamic_array<Optional_column_metadata>& column_metadata,
   unsigned char *field, unsigned int length)
 {
-  unsigned char *field_end= field + length;
+  unsigned char *p= field;
+  unsigned char *field_end= p + length;
   unsigned char unsigned_bitfield= 0;
   unsigned char mask= 0;
 
@@ -3738,9 +3739,9 @@ static void parse_signedness(
       continue;
     if (mask == 0)
     {
-      if (field >= field_end)
+      if (p >= field_end)
         return;
-      unsigned_bitfield= *field++;
+      unsigned_bitfield= *p++;
       mask= 0x80;
     }
     col_meta.is_unsigned= unsigned_bitfield & mask;
