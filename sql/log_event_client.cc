@@ -3340,18 +3340,13 @@ void Table_map_log_event::print_columns(IO_CACHE *file,
     const CHARSET_INFO *cs= NULL;
     if (is_character_type(real_type))
     {
-      const auto& cs_num= column_metadata.charset.has_value() ?
-          column_metadata.charset : fields.m_default_charset;
-      if (cs_num.has_value())
-        cs= get_charset(*cs_num, 0);
+      if (column_metadata.charset)
+        cs= get_charset(column_metadata.charset, 0);
     }
     else if (is_enum_or_set_type(real_type))
     {
-      const auto& cs_num= column_metadata.enum_and_set_column_charset.has_value() ?
-          column_metadata.enum_and_set_column_charset :
-          fields.m_enum_and_set_default_charset;
-      if (cs_num.has_value())
-        cs= get_charset(*cs_num, 0);
+      if (column_metadata.enum_and_set_column_charset)
+        cs= get_charset(column_metadata.enum_and_set_column_charset, 0);
     }
 
     // Print column name

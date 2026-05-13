@@ -4582,9 +4582,6 @@ public:
     typedef Dynamic_array<LEX_CSTRING> str_vector;
     bool allocation_error; /* Set if allocation of data structures fails */
 
-    std::optional<uint> m_default_charset{};
-    std::optional<uint> m_enum_and_set_default_charset{};
-
     struct Column_metadata
     {
         LEX_CSTRING column_name{ nullptr, 0 };
@@ -4602,8 +4599,9 @@ public:
         // (SIMPLE_PRIMARY_KEY).
         std::optional<uint> primary_key{};
 
-        std::optional<uint> charset{};
-        std::optional<uint> enum_and_set_column_charset{};
+        // 0 means no charset information present
+        uint charset{ 0 };
+        uint enum_and_set_column_charset{ 0 };
     };
 
     Dynamic_array<Column_metadata> m_column_metadata;

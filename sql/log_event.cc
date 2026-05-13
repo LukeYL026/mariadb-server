@@ -3761,7 +3761,10 @@ static void parse_default_charset(
   unsigned char *field, unsigned int length)
 {
   unsigned char* p= field;
-  fields.m_default_charset= net_field_length(&p);
+  uint default_cs= net_field_length(&p);
+  for (uint i= 0; i < fields.m_column_metadata.size(); i++)
+    if (is_character_type(fields.m_column_metadata.at(i).column_type))
+      fields.m_column_metadata.at(i).charset= default_cs;
   while (p < field + length)
   {
     unsigned int col_index= net_field_length(&p);
@@ -3781,7 +3784,10 @@ static void parse_enum_and_set_default_charset(
   unsigned char *field, unsigned int length)
 {
   unsigned char* p= field;
-  fields.m_enum_and_set_default_charset= net_field_length(&p);
+  uint default_cs= net_field_length(&p);
+  for (uint i= 0; i < fields.m_column_metadata.size(); i++)
+    if (is_enum_or_set_type(fields.m_column_metadata.at(i).column_type))
+      fields.m_column_metadata.at(i).enum_and_set_column_charset= default_cs;
   while (p < field + length)
   {
     unsigned int col_index= net_field_length(&p);
