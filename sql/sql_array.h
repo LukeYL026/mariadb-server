@@ -42,7 +42,7 @@ public:
   {}
 
   void reset() { m_array= NULL; m_size= 0; }
-
+ 
   void reset(Element_type *array_arg, size_t size_arg)
   {
     m_array= array_arg;
@@ -284,7 +284,7 @@ public:
     size_t old_size= elements();
     if (reserve(new_size))
       return true;
-
+    
     if (new_size > old_size)
     {
       set_dynamic(&array, (uchar*)&default_val, new_size - 1);
