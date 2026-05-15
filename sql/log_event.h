@@ -53,6 +53,7 @@ static inline bool is_numeric_type(uint type)
   case MYSQL_TYPE_NEWDECIMAL:
   case MYSQL_TYPE_FLOAT:
   case MYSQL_TYPE_DOUBLE:
+  case MYSQL_TYPE_YEAR:
     return true;
   default:
     return false;
