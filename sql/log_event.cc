@@ -92,7 +92,7 @@ TYPELIB binlog_checksum_typelib= CREATE_TYPELIB_FOR(binlog_checksum_type_names);
 */
 #define FMT_G_BUFSIZE(PREC) (3 + (PREC) + 5 + 1)
 
-/*
+/* 
    replication event checksum is introduced in the following "checksum-home" version.
    The checksum-aware servers extract FD's version to decide whether the FD event
    carries checksum info.
@@ -287,7 +287,7 @@ char *str_to_hex(char *to, const uchar *from, size_t len)
 uint32 binlog_get_compress_len(uint32 len)
 {
     /* 5 for the begin content, 1 reserved for a '\0'*/
-    return ALIGN_SIZE((BINLOG_COMPRESSED_HEADER_LEN + BINLOG_COMPRESSED_ORIGINAL_LENGTH_MAX_BYTES)
+    return ALIGN_SIZE((BINLOG_COMPRESSED_HEADER_LEN + BINLOG_COMPRESSED_ORIGINAL_LENGTH_MAX_BYTES) 
                         + compressBound(len) + 1);
 }
 
@@ -326,7 +326,7 @@ int binlog_buf_compress(const uchar *src, uchar *dst, uint32 len, uint32 *comlen
     dst[2]= uchar(len);
     lenlen= 2;
   }
-  else
+  else 
   {
     dst[1]= uchar(len);
     lenlen= 1;
@@ -396,19 +396,19 @@ query_event_uncompress(const Format_description_log_event *description_event,
                           (contain_checksum ? BINLOG_CHECKSUM_LEN : 0));
   uint32 un_len=  binlog_get_uncompress_len(tmp);
 
-  // bad event
+  // bad event 
   if (comp_len < 0 || un_len == 0)
     return 1;
 
   *newlen= (ulong)(tmp - src) + un_len;
   if (contain_checksum)
     *newlen+= BINLOG_CHECKSUM_LEN;
-
+  
   uint32 alloc_size= (uint32)ALIGN_SIZE(*newlen);
 
   if (alloc_size <= buf_size)
     new_dst= buf;
-  else
+  else 
   {
     new_dst= (uchar *) my_malloc(PSI_INSTRUMENT_ME, alloc_size, MYF(MY_WME));
     if (!new_dst)
@@ -481,7 +481,7 @@ row_log_event_uncompress(const Format_description_log_event *description_event,
     type=
       (Log_event_type)(type - WRITE_ROWS_COMPRESSED_EVENT + WRITE_ROWS_EVENT);
   }
-  else
+  else 
   {
     /* get the uncompressed event type */
     type= (Log_event_type)
@@ -516,9 +516,9 @@ row_log_event_uncompress(const Format_description_log_event *description_event,
     *newlen+= BINLOG_CHECKSUM_LEN;
 
   size_t alloc_size= ALIGN_SIZE(*newlen);
-
+  
   *is_malloc= false;
-  if (alloc_size <= buf_size)
+  if (alloc_size <= buf_size) 
   {
     new_dst= buf;
   }
@@ -1015,7 +1015,7 @@ Log_event* Log_event::read_log_event(const uchar *buf, size_t event_len,
     In the RL case, the alg is kept in FD_e (@fdle) which is reset
     to the newer read-out event after its execution with possibly new alg descriptor.
     Therefore in a typical sequence of RL:
-    {FD_s^0, FD_m, E_m^1} E_m^1
+    {FD_s^0, FD_m, E_m^1} E_m^1 
     will be verified with (A) of FD_m.
 
     See legends definition on MYSQL_BIN_LOG::relay_log_checksum_alg docs
@@ -1035,7 +1035,7 @@ Log_event* Log_event::read_log_event(const uchar *buf, size_t event_len,
       DBUG_PRINT("info", ("Corrupt the event at Log_event::read_log_event(char*,...): byte on position %d", debug_cor_pos));
       DBUG_SET("-d,corrupt_read_log_event_char");
     }
-  );
+  );                                                 
   if (crc_check && event_checksum_test(const_cast<uchar*>(buf), event_len, alg))
   {
 #ifdef MYSQL_CLIENT
@@ -1225,7 +1225,7 @@ Log_event *Log_event::read_log_event_no_checksum(
       ev= new Format_description_log_event(buf, static_cast<uint>(event_len),
                                            fdle);
       break;
-#if defined(HAVE_REPLICATION)
+#if defined(HAVE_REPLICATION) 
     case WRITE_ROWS_EVENT_V1:
     case WRITE_ROWS_EVENT:
       ev= new Write_rows_log_event(buf, event_len, fdle);
@@ -1360,7 +1360,7 @@ exit:
     DBUG_RETURN(0);
 #endif
   }
-  DBUG_RETURN(ev);
+  DBUG_RETURN(ev);  
 }
 
 
@@ -1477,7 +1477,7 @@ get_str_len_and_pointer(const Log_event::Byte **src,
   return 0;
 }
 
-static void copy_str_and_move(const char **src, Log_event::Byte **dst,
+static void copy_str_and_move(const char **src, Log_event::Byte **dst, 
                               size_t len)
 {
   memcpy(*dst, *src, len);
@@ -1613,7 +1613,7 @@ Query_log_event::Query_log_event(const uchar *buf, uint event_len,
   */
 
   /* variable-part: the status vars; only in MySQL 5.0  */
-
+  
   start= (Log_event::Byte*) (buf+post_header_len);
   end= (const Log_event::Byte*) (start+status_vars_len);
   for (const Log_event::Byte* pos= start; pos < end;)
@@ -1875,7 +1875,7 @@ Query_log_event::Query_log_event(const uchar *buf, uint event_len,
     my_alloc call above? /sven
   */
 
-  /* A 2nd variable part; this is common to all versions */
+  /* A 2nd variable part; this is common to all versions */ 
   memcpy((char*) start, end, data_len);          // Copy db and query
   start[data_len]= '\0';              // End query with \0 (For safetly)
   db= (char *)start;
@@ -2479,7 +2479,7 @@ Format_description_log_event::is_version_before_checksum(const master_version_sp
 /**
    @param buf buffer holding serialized FD event
    @param len netto (possible checksum is stripped off) length of the event buf
-
+   
    @return  the version-safe checksum alg descriptor where zero
             designates no checksum, 255 - the orginator is
             checksum-unaware (effectively no checksum) and the actual
@@ -2497,7 +2497,7 @@ enum_binlog_checksum_alg get_checksum_alg(const uchar *buf, size_t len)
          buf + LOG_EVENT_MINIMAL_HEADER_LEN + ST_SERVER_VER_OFFSET,
          ST_SERVER_VER_LEN);
   version[ST_SERVER_VER_LEN - 1]= 0;
-
+  
   Format_description_log_event::master_version_split version_split(version);
   ret= Format_description_log_event::is_version_before_checksum(&version_split)
     ? BINLOG_CHECKSUM_ALG_UNDEF
@@ -3016,7 +3016,7 @@ User_var_log_event(const uchar *buf, uint event_len,
   if (is_null)
   {
     val_len= 0;
-    val= 0;
+    val= 0;  
   }
   else
   {
@@ -3073,7 +3073,7 @@ Append_block_log_event(const uchar *buf, uint len,
   :Log_event(buf, description_event),block(0)
 {
   DBUG_ENTER("Append_block_log_event::Append_block_log_event(char*,...)");
-  uint8 common_header_len= description_event->common_header_len;
+  uint8 common_header_len= description_event->common_header_len; 
   uint8 append_block_header_len=
     description_event->post_header_len[APPEND_BLOCK_EVENT-1];
   uint total_header_len= common_header_len+append_block_header_len;
@@ -3476,7 +3476,7 @@ int Rows_log_event::get_data_size()
     data_size+= no_bytes_in_export_map(&m_cols_ai);
 
   data_size+= (uint) (m_rows_cur - m_rows_buf);
-  return data_size;
+  return data_size; 
 }
 
 
@@ -3550,7 +3550,7 @@ bool Annotate_rows_log_event::is_valid() const
   data) in the table map are initialized as zero (0). The array size is the
   same as the columns for the table on the slave.
 
-  Additionally, values saved for field metadata on the master are saved as a
+  Additionally, values saved for field metadata on the master are saved as a 
   string of bytes (uchar) in the binlog. A field may require 1 or more bytes
   to store the information. In cases where values require multiple bytes
   (e.g. values > 255), the endian-safe methods are used to properly encode
@@ -3559,7 +3559,7 @@ bool Annotate_rows_log_event::is_valid() const
   type uint16. This allows the least number of casts to prevent casting bugs
   when the field metadata is used in comparisons of field attributes. When
   the field metadata is used for calculating addresses in pointer math, the
-  type used is uint32.
+  type used is uint32. 
 */
 
 /*

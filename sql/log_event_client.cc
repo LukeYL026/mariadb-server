@@ -395,7 +395,7 @@ my_b_write_quoted(IO_CACHE *file, const uchar *ptr, uint length)
 
 /**
   Prints a bit string to io cache in format  b'1010'.
-
+  
   @param[in] file              IO cache
   @param[in] ptr               Pointer to string
   @param[in] nbits             Number of bits
@@ -418,11 +418,11 @@ my_b_write_bit(IO_CACHE *file, const uchar *ptr, uint nbits)
   Prints a packed string to io cache.
   The string consists of length packed to 1 or 2 bytes,
   followed by string data itself.
-
+  
   @param[in] file              IO cache
   @param[in] ptr               Pointer to string
   @param[in] length            String size
-
+  
   @retval   - number of bytes scanned.
 */
 static size_t
@@ -445,7 +445,7 @@ my_b_write_quoted_with_length(IO_CACHE *file, const uchar *ptr, uint length)
 
 /**
   Prints a 32-bit number in both signed and unsigned representation
-
+  
   @param[in] file              IO cache
   @param[in] sl                Signed number
   @param[in] ul                Unsigned number
@@ -463,14 +463,14 @@ my_b_write_sint32_and_uint32(IO_CACHE *file, int32 si, uint32 ui)
 
 /**
   Print a packed value of the given SQL type into IO cache
-
+  
   @param[in] file              IO cache
   @param[in] ptr               Pointer to string
   @param[in] type              Column type
   @param[in] meta              Column meta information
   @param[out] typestr          SQL type string buffer (for verbose output)
   @param[out] typestr_length   Size of typestr
-
+  
   @retval   - number of bytes scanned from ptr.
               Except in case of NULL, in which case we return 1 to indicate ok
 */
@@ -488,7 +488,7 @@ log_event_print_value(IO_CACHE *file, PRINT_EVENT_INFO *print_event_info,
     {
       uint byte0= meta >> 8;
       uint byte1= meta & 0xFF;
-
+      
       if ((byte0 & 0x30) != 0x30)
       {
         /* a long CHAR() field: see #37426 */
@@ -537,7 +537,7 @@ log_event_print_value(IO_CACHE *file, PRINT_EVENT_INFO *print_event_info,
       my_b_write_sint32_and_uint32(file, si, ui);
       return 2;
     }
-
+  
   case MYSQL_TYPE_INT24:
     {
       strmake(typestr, "MEDIUMINT", typestr_length);
@@ -565,7 +565,7 @@ log_event_print_value(IO_CACHE *file, PRINT_EVENT_INFO *print_event_info,
       {
         ulonglong ui= uint8korr(ptr);
         longlong10_to_str((longlong) ui, tmp, 10);
-        my_b_printf(file, " (%s)", tmp);
+        my_b_printf(file, " (%s)", tmp);        
       }
       return 8;
     }
@@ -613,7 +613,7 @@ log_event_print_value(IO_CACHE *file, PRINT_EVENT_INFO *print_event_info,
       my_b_printf(file, tmp, "%s");
       return 8;
     }
-
+  
   case MYSQL_TYPE_BIT:
     {
       /* Meta-data: bit_len, bytes_in_rec, 2 bytes */
@@ -742,7 +742,7 @@ log_event_print_value(IO_CACHE *file, PRINT_EVENT_INFO *print_event_info,
       my_b_printf(file , "'%s'", buf);
       return 3;
     }
-
+    
   case MYSQL_TYPE_DATE:
     {
       strmake(typestr, "DATE", typestr_length);
@@ -755,7 +755,7 @@ log_event_print_value(IO_CACHE *file, PRINT_EVENT_INFO *print_event_info,
                   (int)(i32 % 32L));
       return 3;
     }
-
+  
   case MYSQL_TYPE_YEAR:
     {
       strmake(typestr, "YEAR", typestr_length);
@@ -766,7 +766,7 @@ log_event_print_value(IO_CACHE *file, PRINT_EVENT_INFO *print_event_info,
       my_b_printf(file, "%04d", i32+ 1900);
       return 1;
     }
-
+  
   case MYSQL_TYPE_ENUM:
     switch (meta & 0xFF) {
     case 1:
@@ -787,11 +787,11 @@ log_event_print_value(IO_CACHE *file, PRINT_EVENT_INFO *print_event_info,
         return 2;
       }
     default:
-      my_b_printf(file, "!! Unknown ENUM packlen=%d", meta & 0xFF);
+      my_b_printf(file, "!! Unknown ENUM packlen=%d", meta & 0xFF); 
       return 0;
     }
     break;
-
+    
   case MYSQL_TYPE_SET:
     my_snprintf(typestr, typestr_length, "SET(%d bytes)", meta & 0xFF);
       if (!ptr)
@@ -799,7 +799,7 @@ log_event_print_value(IO_CACHE *file, PRINT_EVENT_INFO *print_event_info,
 
     my_b_write_bit(file, ptr , (meta & 0xFF) * 8);
     return meta & 0xFF;
-
+  
   case MYSQL_TYPE_BLOB_COMPRESSED:
   case MYSQL_TYPE_BLOB:
     switch (meta) {
@@ -894,14 +894,14 @@ return_null:
 
 /**
   Print a packed row into IO cache
-
+  
   @param[in] file              IO cache
   @param[in] td                Table definition
   @param[in] print_event_into  Print parameters
   @param[in] cols_bitmap       Column bitmaps.
   @param[in] value             Pointer to packed row
   @param[in] prefix            Row's SQL clause ("SET", "WHERE", etc)
-
+  
   @retval   0 error
             # number of bytes scanned.
 */
@@ -937,7 +937,7 @@ Rows_log_event::print_verbose_one_row(IO_CACHE *file, table_def *td,
   for (uint i= 0; i < (uint)td->size(); i ++)
   {
     size_t size;
-    int is_null= (null_bits[null_bit_index / 8]
+    int is_null= (null_bits[null_bit_index / 8] 
                   >> (null_bit_index % 8))  & 0x01;
 
     if (bitmap_is_set(cols_bitmap, i) == 0)
@@ -1895,7 +1895,7 @@ bool Query_log_event::print_query_header(IO_CACHE* file,
     different_db= memcmp(print_event_info->db, db, db_len + 1);
     if (different_db)
       memcpy(print_event_info->db, db, db_len + 1);
-    if (db[0] && different_db)
+    if (db[0] && different_db) 
       if (my_b_printf(file, "use %`s%s\n", db, print_event_info->delimiter))
         goto err;
   }
@@ -1935,7 +1935,7 @@ bool Query_log_event::print_query_header(IO_CACHE* file,
   if (likely(flags2_inited)) /* likely as this will mainly read 5.0 logs */
   {
     /* tmp is a bitmask of bits which have changed. */
-    if (likely(print_event_info->flags2_inited))
+    if (likely(print_event_info->flags2_inited)) 
       /* All bits which have changed */
       tmp= (print_event_info->flags2) ^ flags2;
     else /* that's the first Query event we read */
@@ -3024,7 +3024,7 @@ err:
     representation taken from a binary log. It resets m_dbnam and m_dblen and
     rewrites temp_buf with new db name.
 
-  RETURN
+  RETURN 
     0     - Success
     other - Error
 */
