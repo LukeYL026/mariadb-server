@@ -3422,7 +3422,7 @@ void Table_map_log_event::print_primary_key
 
   bool has_pk= false;
   for (uint i = 0; i < col_metadata.size(); i++) {
-    if (col_metadata[i].primary_key.has_value()) {
+    if (col_metadata.at(i).primary_key.has_value()) {
       has_pk= true;
       break;
     }

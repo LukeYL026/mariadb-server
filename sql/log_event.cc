@@ -3768,7 +3768,9 @@ static void parse_default_charset(
   while (p < field + length)
   {
     unsigned int col_index= net_field_length(&p);
-    fields.m_column_metadata.at(col_index).charset= net_field_length(&p);
+    uint charset= net_field_length(&p);
+    if (col_index < fields.m_column_metadata.size())
+      fields.m_column_metadata.at(col_index).charset= charset;
   }
 }
 
@@ -3791,7 +3793,9 @@ static void parse_enum_and_set_default_charset(
   while (p < field + length)
   {
     unsigned int col_index= net_field_length(&p);
-    fields.m_column_metadata.at(col_index).enum_and_set_column_charset= net_field_length(&p);
+    uint charset= net_field_length(&p);
+    if (col_index < fields.m_column_metadata.size())
+      fields.m_column_metadata.at(col_index).enum_and_set_column_charset= charset;
   }
 }
 
@@ -3939,7 +3943,11 @@ static void parse_simple_pk(
   unsigned char* p= field;
 
   while (p < field + length)
-    column_metadata.at(net_field_length(&p)).primary_key = 0;
+  {
+    unsigned int col_index= net_field_length(&p);
+    if (col_index < column_metadata.size())
+      column_metadata.at(col_index).primary_key = 0;
+  }
 }
 
 /**
@@ -3960,7 +3968,8 @@ static void parse_pk_with_prefix(
   {
     unsigned int col_index= net_field_length(&p);
     unsigned int col_prefix= net_field_length(&p);
-    column_metadata.at(col_index).primary_key = col_prefix;
+    if (col_index < column_metadata.size())
+      column_metadata.at(col_index).primary_key = col_prefix;
   }
 }
 
