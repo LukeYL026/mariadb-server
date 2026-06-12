@@ -1356,7 +1356,7 @@ default_column_mapping:
                  (uchar*) m_tabledef.optional_metadata.str,
                  m_tabledef.optional_metadata.length, 1);
 
-  if (!opt_metadata.m_column_metadata.empty() && 
+  if (!opt_metadata.m_column_metadata.is_empty() && 
           !opt_metadata.m_column_metadata.at(0).column_name.str)
   {
     /*

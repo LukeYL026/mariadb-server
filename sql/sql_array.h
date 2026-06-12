@@ -197,7 +197,7 @@ public:
 
   size_t size() const { return array.elements; }
 
-  bool empty() const { return array.elements == 0; }
+  bool is_empty() const { return array.elements == 0; }
 
   const Elem *end() const
   {

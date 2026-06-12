@@ -3383,11 +3383,11 @@ void Table_map_log_event::print_columns(IO_CACHE *file,
 
     // Print string values of SET and ENUM column
     const Optional_metadata_fields::str_vector *str_values= NULL;
-    if (real_type == MYSQL_TYPE_ENUM && !column_metadata.enum_str_values.empty())
+    if (real_type == MYSQL_TYPE_ENUM && !column_metadata.enum_str_values.is_empty())
     {
       str_values= &column_metadata.enum_str_values;
     }
-    else if (real_type == MYSQL_TYPE_SET && !column_metadata.set_str_values.empty())
+    else if (real_type == MYSQL_TYPE_SET && !column_metadata.set_str_values.is_empty())
     {
       str_values= &column_metadata.set_str_values;
     }
