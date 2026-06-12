@@ -1,0 +1,125 @@
+--source include/have_debug.inc
+--source include/have_binlog_format_row.inc
+--source include/master-slave.inc
+
+--echo #
+--echo # MDEV-39689: Slave Overflow on Malformed Table_map_log_event
+--echo #
+--echo # All tests verify that corrupted optional metadata lengths in
+--echo # parse_* functions are handled gracefully. The slave should fall
+--echo # back to positional column mapping and replicate successfully.
+--echo #
+
+--echo #
+--echo # Test 1: parse_column_name - corrupted column name length
+--echo #
+
+--connection master
+CREATE TABLE t1 (c1 INT PRIMARY KEY);
+SET @@SESSION.debug_dbug="+d,corrupt_table_map_column_name_length";
+INSERT INTO t1 VALUES (1);
+SET @@SESSION.debug_dbug= "";
+--sync_slave_with_master
+SELECT * FROM t1;
+
+--connection master
+DROP TABLE t1;
+--sync_slave_with_master
+
+--echo #
+--echo # Test 2: parse_default_charset - corrupted default charset length
+--echo #
+
+--connection master
+CREATE TABLE t1 (c1 VARCHAR(10) CHARSET latin1, c2 VARCHAR(10) CHARSET latin1, c3 VARCHAR(10) CHARSET utf8mb4);
+SET @@SESSION.debug_dbug="+d,corrupt_table_map_default_charset_length";
+INSERT INTO t1 VALUES ('a', 'b', 'c');
+SET @@SESSION.debug_dbug= "";
+--sync_slave_with_master
+SELECT * FROM t1;
+
+--connection master
+DROP TABLE t1;
+--sync_slave_with_master
+
+--echo #
+--echo # Test 3: parse_column_charset - corrupted column charset length
+--echo #
+
+--connection master
+CREATE TABLE t1 (c1 VARCHAR(10) CHARSET latin1);
+SET @@SESSION.debug_dbug="+d,corrupt_table_map_column_charset_length";
+INSERT INTO t1 VALUES ('a');
+SET @@SESSION.debug_dbug= "";
+--sync_slave_with_master
+SELECT * FROM t1;
+
+--connection master
+DROP TABLE t1;
+--sync_slave_with_master
+
+--echo #
+--echo # Test 4: parse_set_str_value - corrupted SET string value length
+--echo #
+
+--connection master
+CREATE TABLE t1 (c1 SET('a','b','c'));
+SET @@SESSION.debug_dbug="+d,corrupt_table_map_set_str_value_length";
+INSERT INTO t1 VALUES ('a');
+SET @@SESSION.debug_dbug= "";
+--sync_slave_with_master
+SELECT * FROM t1;
+
+--connection master
+DROP TABLE t1;
+--sync_slave_with_master
+
+--echo #
+--echo # Test 5: parse_geometry_type - corrupted geometry type length
+--echo #
+
+--connection master
+CREATE TABLE t1 (c1 GEOMETRY NOT NULL);
+SET @@SESSION.debug_dbug="+d,corrupt_table_map_geometry_type_length";
+INSERT INTO t1 VALUES (PointFromText('POINT(0 0)'));
+SET @@SESSION.debug_dbug= "";
+--sync_slave_with_master
+SELECT ST_AsText(c1) FROM t1;
+
+--connection master
+DROP TABLE t1;
+--sync_slave_with_master
+
+--echo #
+--echo # Test 6: parse_simple_pk - corrupted simple primary key length
+--echo #
+
+--connection master
+CREATE TABLE t1 (c1 INT PRIMARY KEY);
+SET @@SESSION.debug_dbug="+d,corrupt_table_map_simple_pk_length";
+INSERT INTO t1 VALUES (1);
+SET @@SESSION.debug_dbug= "";
+--sync_slave_with_master
+SELECT * FROM t1;
+
+--connection master
+DROP TABLE t1;
+--sync_slave_with_master
+
+--echo #
+--echo # Test 7: parse_pk_with_prefix - corrupted prefix primary key length
+--echo #
+
+--connection master
+CREATE TABLE t1 (c1 VARCHAR(100), PRIMARY KEY(c1(10)));
+SET @@SESSION.debug_dbug="+d,corrupt_table_map_pk_prefix_length";
+INSERT INTO t1 VALUES ('hello');
+SET @@SESSION.debug_dbug= "";
+--sync_slave_with_master
+SELECT * FROM t1;
+
+--connection master
+DROP TABLE t1;
+--sync_slave_with_master
+
+--source include/rpl_end.inc
