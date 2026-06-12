@@ -1,0 +1,7 @@
+!include ../my.cnf
+
+[mysqld.1]
+binlog_row_metadata=FULL
+
+[mysqld.2]
+slave_type_conversions=ERROR_IF_MISSING_FIELD
