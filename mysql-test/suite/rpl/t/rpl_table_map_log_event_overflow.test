@@ -10,6 +10,10 @@
 --echo # back to positional column mapping and replicate successfully.
 --echo #
 
+--connection slave
+CALL mtr.add_suppression("Error in Log_event::read_log_event.*Found invalid event");
+CALL mtr.add_suppression("Relay log read failure");
+
 --echo #
 --echo # Test 1: parse_column_name - corrupted column name length
 --echo #
@@ -117,6 +121,62 @@ INSERT INTO t1 VALUES ('hello');
 SET @@SESSION.debug_dbug= "";
 --sync_slave_with_master
 SELECT * FROM t1;
+
+--connection master
+DROP TABLE t1;
+--sync_slave_with_master
+
+--echo #
+--echo # Test 8: Table_map_log_event constructor - corrupted column count
+--echo #         (slave-side injection) - slave rejects event gracefully
+--echo #
+
+--connection slave
+--source include/stop_slave.inc
+SET @saved_dbug= @@GLOBAL.debug_dbug;
+SET @@GLOBAL.debug_dbug="+d,corrupt_table_map_colcnt_read";
+--source include/start_slave.inc
+
+--connection master
+CREATE TABLE t1 (c1 INT PRIMARY KEY);
+INSERT INTO t1 VALUES (1);
+--source include/save_master_gtid.inc
+
+--connection slave
+--let $slave_sql_errno= 1594
+--source include/wait_for_slave_sql_error.inc
+SET @@GLOBAL.debug_dbug= @saved_dbug;
+--source include/stop_slave_io.inc
+SET GLOBAL sql_slave_skip_counter= 1;
+--source include/start_slave.inc
+
+--connection master
+DROP TABLE t1;
+--sync_slave_with_master
+
+--echo #
+--echo # Test 9: Table_map_log_event constructor - corrupted field metadata size
+--echo #         (slave-side injection) - slave rejects event gracefully
+--echo #
+
+--connection slave
+--source include/stop_slave.inc
+SET @saved_dbug= @@GLOBAL.debug_dbug;
+SET @@GLOBAL.debug_dbug="+d,corrupt_table_map_field_metadata_size_read";
+--source include/start_slave.inc
+
+--connection master
+CREATE TABLE t1 (c1 INT PRIMARY KEY);
+INSERT INTO t1 VALUES (1);
+--source include/save_master_gtid.inc
+
+--connection slave
+--let $slave_sql_errno= 1594
+--source include/wait_for_slave_sql_error.inc
+SET @@GLOBAL.debug_dbug= @saved_dbug;
+--source include/stop_slave_io.inc
+SET GLOBAL sql_slave_skip_counter= 1;
+--source include/start_slave.inc
 
 --connection master
 DROP TABLE t1;

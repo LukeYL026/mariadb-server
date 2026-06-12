@@ -6839,8 +6839,9 @@ bool Table_map_log_event::write_data_body(Log_event_writer *writer)
   uchar const dbuf[]= { (uchar) m_dblen };
   uchar const tbuf[]= { (uchar) m_tbllen };
 
+  ulong colcnt_to_write= (ulong) m_colcnt;
   uchar cbuf[MAX_INT_WIDTH];
-  uchar *const cbuf_end= net_store_length(cbuf, (size_t) m_colcnt);
+  uchar *const cbuf_end= net_store_length(cbuf, (size_t) colcnt_to_write);
   DBUG_ASSERT(static_cast<size_t>(cbuf_end - cbuf) <= sizeof(cbuf));
 
   /*
