@@ -7,9 +7,9 @@ SET GLOBAL binlog_row_metadata = FULL;
 #
 CREATE TABLE t1(c_signed INT, c_char CHAR(10), c_unsigned INT UNSIGNED);
 INSERT INTO t1 VALUES(-1, 'x', 1);
-# Columns(INT,
-#         CHAR(10) CHARSET latin1 COLLATE latin1_swedish_ci,
-#         INT UNSIGNED)
+# Columns(`c_signed` INT,
+#         `c_char` CHAR(10) CHARSET latin1 COLLATE latin1_swedish_ci,
+#         `c_unsigned` INT UNSIGNED)
 DROP TABLE t1;
 RESET MASTER;
 #
@@ -23,16 +23,16 @@ c5 TINYINT, c6 TINYINT, c7 TINYINT, c8 TINYINT,
 c_text TEXT,
 c9 TINYINT UNSIGNED);
 INSERT INTO t1(c1) VALUES(1);
-# Columns(TINYINT,
-#         TINYINT,
-#         TINYINT,
-#         TINYINT,
-#         TINYINT,
-#         TINYINT,
-#         TINYINT,
-#         TINYINT,
-#         TEXT CHARSET latin1 COLLATE latin1_swedish_ci,
-#         TINYINT UNSIGNED)
+# Columns(`c1` TINYINT,
+#         `c2` TINYINT,
+#         `c3` TINYINT,
+#         `c4` TINYINT,
+#         `c5` TINYINT,
+#         `c6` TINYINT,
+#         `c7` TINYINT,
+#         `c8` TINYINT,
+#         `c_text` TEXT CHARSET latin1 COLLATE latin1_swedish_ci,
+#         `c9` TINYINT UNSIGNED)
 DROP TABLE t1;
 RESET MASTER;
 #
@@ -47,18 +47,18 @@ c7 TINYINT UNSIGNED, c8 TINYINT UNSIGNED,
 c_blob BLOB, c_varchar VARCHAR(100),
 c9 TINYINT, c10 TINYINT UNSIGNED);
 INSERT INTO t1(c1) VALUES(1);
-# Columns(TINYINT UNSIGNED,
-#         TINYINT UNSIGNED,
-#         TINYINT UNSIGNED,
-#         TINYINT UNSIGNED,
-#         TINYINT UNSIGNED,
-#         TINYINT UNSIGNED,
-#         TINYINT UNSIGNED,
-#         TINYINT UNSIGNED,
-#         BLOB,
-#         VARCHAR(100) CHARSET latin1 COLLATE latin1_swedish_ci,
-#         TINYINT,
-#         TINYINT UNSIGNED)
+# Columns(`c1` TINYINT UNSIGNED,
+#         `c2` TINYINT UNSIGNED,
+#         `c3` TINYINT UNSIGNED,
+#         `c4` TINYINT UNSIGNED,
+#         `c5` TINYINT UNSIGNED,
+#         `c6` TINYINT UNSIGNED,
+#         `c7` TINYINT UNSIGNED,
+#         `c8` TINYINT UNSIGNED,
+#         `c_blob` BLOB,
+#         `c_varchar` VARCHAR(100) CHARSET latin1 COLLATE latin1_swedish_ci,
+#         `c9` TINYINT,
+#         `c10` TINYINT UNSIGNED)
 DROP TABLE t1;
 RESET MASTER;
 #
@@ -68,9 +68,9 @@ RESET MASTER;
 #
 CREATE TABLE t1(c_signed INT, c_year YEAR, c_unsigned INT UNSIGNED);
 INSERT INTO t1(c_signed) VALUES(-1);
-# Columns(INT,
-#         YEAR UNSIGNED,
-#         INT UNSIGNED)
+# Columns(`c_signed` INT,
+#         `c_year` YEAR UNSIGNED,
+#         `c_unsigned` INT UNSIGNED)
 DROP TABLE t1;
 RESET MASTER;
 SET GLOBAL binlog_row_metadata = NO_LOG;
