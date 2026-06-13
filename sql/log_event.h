@@ -4623,6 +4623,23 @@ public:
                              uchar* optional_metadata,
                              size_t optional_metadata_len,
                              bool only_column_names);
+
+    ~Optional_metadata_fields()
+    {
+      /*
+        Dynamic_array frees its own buffer in its destructor, but it does so
+        via delete_dynamic(), which only releases the flat element buffer and
+        does not run the element destructors. Each Column_metadata owns
+        heap-allocated str_vectors (enum_str_values / set_str_values), so
+        destroy every element explicitly to avoid leaking those buffers.
+      */
+      for (size_t i= 0; i < m_column_metadata.size(); i++)
+        m_column_metadata.at(i).~Column_metadata();
+    }
+
+    /* Owns heap allocations; copying would lead to double frees. */
+    Optional_metadata_fields(const Optional_metadata_fields&)= delete;
+    Optional_metadata_fields& operator=(const Optional_metadata_fields&)= delete;
   };
 
   /**

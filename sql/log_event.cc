@@ -3874,8 +3874,11 @@ static bool parse_column_name(MEM_ROOT *root,
    @param[in]  length     length of the field
    @param[in]  column_type  type of the given column (i.e. MYSQL_TYPE_XYZ)
    @param[in]  var_to_set   pointer-to-member selecting which str_vector to fill
+
+   @retval false ok
+   @retval true  out of memory while reserving the str_vector
  */
-static void parse_set_str_value(
+static bool parse_set_str_value(
     Dynamic_array<Optional_column_metadata> &column_metadata,
     unsigned char *field, unsigned int length,
     uchar column_type,
@@ -3893,7 +3896,7 @@ static void parse_set_str_value(
     auto* column_strings= &(column_metadata.at(col).*var_to_set);
 
     if (column_strings->reserve(count))
-      return;
+      return 1;
 
     for (unsigned int i= 0; i < count; i++)
     {
@@ -3902,6 +3905,8 @@ static void parse_set_str_value(
       p+= len1;
     }
   }
+
+  return 0;
 }
 
 /**
@@ -4034,12 +4039,14 @@ Optional_metadata_fields(MEM_ROOT *root, uint master_columns,
         goto error;
       break;
     case SET_STR_VALUE:
-      parse_set_str_value(m_column_metadata, field, len, MYSQL_TYPE_SET,
-                          &Optional_column_metadata::set_str_values);
+      if (parse_set_str_value(m_column_metadata, field, len, MYSQL_TYPE_SET,
+                              &Optional_column_metadata::set_str_values))
+        goto error;
       break;
     case ENUM_STR_VALUE:
-      parse_set_str_value(m_column_metadata, field, len, MYSQL_TYPE_ENUM,
-                          &Optional_column_metadata::enum_str_values);
+      if (parse_set_str_value(m_column_metadata, field, len, MYSQL_TYPE_ENUM,
+                              &Optional_column_metadata::enum_str_values))
+        goto error;
       break;
     case GEOMETRY_TYPE:
       parse_geometry_type(m_column_metadata, field, len);
