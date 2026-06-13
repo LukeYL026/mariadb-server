@@ -33,11 +33,6 @@
 #include "mysql/psi/psi_base.h"
 #include "rpl_constants.h"
 #include "sql_array.h"
-#include <vector>
-#include <string>
-#include <functional>
-#include <memory>
-#include <map>
 #include <optional>
 #include <lex_charset.h>
 

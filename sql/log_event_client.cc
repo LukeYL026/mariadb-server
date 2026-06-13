@@ -18,7 +18,6 @@
 
 
 #include "log_event.h"
-#include <algorithm>
 #ifndef MYSQL_CLIENT
 #error MYSQL_CLIENT must be defined here
 #endif
