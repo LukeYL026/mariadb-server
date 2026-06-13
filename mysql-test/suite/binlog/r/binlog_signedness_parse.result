@@ -1,6 +1,6 @@
 ALTER DATABASE test CHARACTER SET latin1 COLLATE latin1_swedish_ci;
 RESET MASTER;
-SET GLOBAL binlog_row_metadata = MINIMAL;
+SET GLOBAL binlog_row_metadata = FULL;
 #
 # Test 1: Non-numeric column between two numeric columns does not
 #         consume a signedness bit (signed INT, CHAR, unsigned INT)
@@ -59,6 +59,18 @@ INSERT INTO t1(c1) VALUES(1);
 #         VARCHAR(100) CHARSET latin1 COLLATE latin1_swedish_ci,
 #         TINYINT,
 #         TINYINT UNSIGNED)
+DROP TABLE t1;
+RESET MASTER;
+#
+# Test 4: YEAR is treated as a numeric type: it always reads as UNSIGNED
+#         and consumes a signedness bit, so a numeric column following it
+#         still reads the correct bit (signed INT, YEAR, unsigned INT).
+#
+CREATE TABLE t1(c_signed INT, c_year YEAR, c_unsigned INT UNSIGNED);
+INSERT INTO t1(c_signed) VALUES(-1);
+# Columns(INT,
+#         YEAR UNSIGNED,
+#         INT UNSIGNED)
 DROP TABLE t1;
 RESET MASTER;
 SET GLOBAL binlog_row_metadata = NO_LOG;
