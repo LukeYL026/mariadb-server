@@ -3643,6 +3643,8 @@ Table_map_log_event::Table_map_log_event(const uchar *buf, uint event_len,
   uchar *ptr_after_colcnt= (uchar*) ptr_colcnt;
   VALIDATE_BYTES_READ(ptr_after_colcnt, buf, event_len);
   m_colcnt= net_field_length(&ptr_after_colcnt);
+  DBUG_EXECUTE_IF("corrupt_table_map_colcnt_read",
+                  m_colcnt= (1 << 20););
 
   DBUG_PRINT("info",("m_dblen: %lu  off: %ld  m_tbllen: %lu  off: %ld  m_colcnt: %lu  off: %ld",
                      (ulong) m_dblen, (long) (ptr_dblen - vpart),
@@ -3661,11 +3663,19 @@ Table_map_log_event::Table_map_log_event(const uchar *buf, uint event_len,
     /* Copy the different parts into their memory */
     strncpy(const_cast<char*>(m_dbnam), (const char*)ptr_dblen  + 1, m_dblen + 1);
     strncpy(const_cast<char*>(m_tblnam), (const char*)ptr_tbllen + 1, m_tbllen + 1);
+    if (unlikely(ptr_after_colcnt + m_colcnt > buf + event_len))
+    {
+      my_free(m_memory);
+      m_memory= NULL;
+      DBUG_VOID_RETURN;
+    }
     memcpy(m_coltype, ptr_after_colcnt, m_colcnt);
 
     ptr_after_colcnt= ptr_after_colcnt + m_colcnt;
     VALIDATE_BYTES_READ(ptr_after_colcnt, buf, event_len);
     m_field_metadata_size= net_field_length(&ptr_after_colcnt);
+    DBUG_EXECUTE_IF("corrupt_table_map_field_metadata_size_read",
+                    m_field_metadata_size= (1 << 20););
     if (m_field_metadata_size <= (m_colcnt * 2))
     {
       uint num_null_bytes= (m_colcnt + 7) / 8;
@@ -3673,8 +3683,24 @@ Table_map_log_event::Table_map_log_event(const uchar *buf, uint event_len,
           &m_null_bits, num_null_bytes,
           &m_field_metadata, m_field_metadata_size,
           NULL);
+      if (unlikely(ptr_after_colcnt + m_field_metadata_size > buf + event_len))
+      {
+        my_free(m_meta_memory);
+        m_meta_memory= NULL;
+        my_free(m_memory);
+        m_memory= NULL;
+        DBUG_VOID_RETURN;
+      }
       memcpy(m_field_metadata, ptr_after_colcnt, m_field_metadata_size);
       ptr_after_colcnt= (uchar*)ptr_after_colcnt + m_field_metadata_size;
+      if (unlikely(ptr_after_colcnt + num_null_bytes > buf + event_len))
+      {
+        my_free(m_meta_memory);
+        m_meta_memory= NULL;
+        my_free(m_memory);
+        m_memory= NULL;
+        DBUG_VOID_RETURN;
+      }
       memcpy(m_null_bits, ptr_after_colcnt, num_null_bytes);
       ptr_after_colcnt= (unsigned char*)ptr_after_colcnt + num_null_bytes;
     }
@@ -3763,14 +3789,21 @@ static void parse_default_charset(
   unsigned char *field, unsigned int length)
 {
   unsigned char* p= field;
+  unsigned char* end= field + length;
   uint default_cs= net_field_length(&p);
+  if (unlikely(p > end))
+    return;
   for (uint i= 0; i < fields.m_column_metadata.size(); i++)
     if (is_character_type(fields.m_column_metadata.at(i).column_type))
       fields.m_column_metadata.at(i).charset= default_cs;
-  while (p < field + length)
+  while (p < end)
   {
     unsigned int col_index= net_field_length(&p);
+    if (unlikely(p > end))
+      return;
     uint charset= net_field_length(&p);
+    if (unlikely(p > end))
+      return;
     if (col_index < fields.m_column_metadata.size())
       fields.m_column_metadata.at(col_index).charset= charset;
   }
@@ -3788,14 +3821,21 @@ static void parse_enum_and_set_default_charset(
   unsigned char *field, unsigned int length)
 {
   unsigned char* p= field;
+  unsigned char* end= field + length;
   uint default_cs= net_field_length(&p);
+  if (unlikely(p > end))
+    return;
   for (uint i= 0; i < fields.m_column_metadata.size(); i++)
     if (is_enum_or_set_type(fields.m_column_metadata.at(i).column_type))
       fields.m_column_metadata.at(i).enum_and_set_column_charset= default_cs;
-  while (p < field + length)
+  while (p < end)
   {
     unsigned int col_index= net_field_length(&p);
+    if (unlikely(p > end))
+      return;
     uint charset= net_field_length(&p);
+    if (unlikely(p > end))
+      return;
     if (col_index < fields.m_column_metadata.size())
       fields.m_column_metadata.at(col_index).enum_and_set_column_charset= charset;
   }
@@ -3813,11 +3853,15 @@ static void parse_column_charset(
   unsigned char *field, unsigned int length)
 {
   unsigned char* p= field;
-  for (uint col= 0; p < field + length && col < column_metadata.size(); col++)
+  unsigned char* end= field + length;
+  for (uint col= 0; p < end && col < column_metadata.size(); col++)
   {
     if (!is_character_type(column_metadata.at(col).column_type))
       continue;
-    column_metadata.at(col).charset= net_field_length(&p);
+    uint charset= net_field_length(&p);
+    if (unlikely(p > end))
+      return;
+    column_metadata.at(col).charset= charset;
   }
 }
 
@@ -3833,11 +3877,15 @@ static void parse_enum_and_set_column_charset(
   unsigned char *field, unsigned int length)
 {
   unsigned char* p= field;
-  for (uint col= 0; p < field + length && col < column_metadata.size(); col++)
+  unsigned char* end= field + length;
+  for (uint col= 0; p < end && col < column_metadata.size(); col++)
   {
     if (!is_enum_or_set_type(column_metadata.at(col).column_type))
       continue;
-    column_metadata.at(col).enum_and_set_column_charset= net_field_length(&p);
+    uint charset= net_field_length(&p);
+    if (unlikely(p > end))
+      return;
+    column_metadata.at(col).enum_and_set_column_charset= charset;
   }
 }
 
@@ -3858,6 +3906,8 @@ static bool parse_column_name(MEM_ROOT *root,
   {
     LEX_CSTRING& name = column_metadata.at(col).column_name;
     uint name_length= net_field_length(&field);
+    if (unlikely(field + name_length > end))
+      return 1;
     if (!(name.str= strmake_root(root, (char*) field, name_length)))
       return 1;
     name.length= name_length;
@@ -3888,13 +3938,16 @@ static bool parse_set_str_value(
         Optional_column_metadata::*var_to_set)
 {
   unsigned char* p= field;
+  unsigned char* end= field + length;
 
-  for (uint col= 0; p < field + length && col < column_metadata.size(); col++)
+  for (uint col= 0; p < end && col < column_metadata.size(); col++)
   {
     if (column_metadata.at(col).column_type != column_type)
       continue;
 
     unsigned int count= net_field_length(&p);
+    if (unlikely(p > end))
+      return 1;
     auto* column_strings= &(column_metadata.at(col).*var_to_set);
 
     if (column_strings->reserve(count))
@@ -3903,6 +3956,8 @@ static bool parse_set_str_value(
     for (unsigned int i= 0; i < count; i++)
     {
       unsigned len1= net_field_length(&p);
+      if (unlikely(p + len1 > end))
+        return 1;
       column_strings->append(LEX_CSTRING{reinterpret_cast<char *>(p), len1});
       p+= len1;
     }
@@ -3924,13 +3979,17 @@ static void parse_geometry_type(
     unsigned char *field, unsigned int length)
 {
   unsigned char* p= field;
+  unsigned char* end= field + length;
 
-  for (unsigned int col = 0; p < field + length && col < column_metadata.size(); col++)
+  for (unsigned int col = 0; p < end && col < column_metadata.size(); col++)
   {
     auto& col_metadata = column_metadata.at(col);
     if (col_metadata.column_type == MYSQL_TYPE_GEOMETRY)
     {
-      col_metadata.geometry_type = net_field_length(&p);
+      uint geom_type= net_field_length(&p);
+      if (unlikely(p > end))
+        return;
+      col_metadata.geometry_type = geom_type;
     }
   }
 }
@@ -3948,10 +4007,13 @@ static void parse_simple_pk(
     unsigned char *field, unsigned int length)
 {
   unsigned char* p= field;
+  unsigned char* end= field + length;
 
-  while (p < field + length)
+  while (p < end)
   {
     unsigned int col_index= net_field_length(&p);
+    if (unlikely(p > end))
+      return;
     if (col_index < column_metadata.size())
       column_metadata.at(col_index).primary_key = 0;
   }
@@ -3970,11 +4032,16 @@ static void parse_pk_with_prefix(
     unsigned char *field, unsigned int length)
 {
   unsigned char* p= field;
+  unsigned char* end= field + length;
 
-  while (p < field + length)
+  while (p < end)
   {
     unsigned int col_index= net_field_length(&p);
+    if (unlikely(p > end))
+      return;
     unsigned int col_prefix= net_field_length(&p);
+    if (unlikely(p > end))
+      return;
     if (col_index < column_metadata.size())
       column_metadata.at(col_index).primary_key = col_prefix;
   }
