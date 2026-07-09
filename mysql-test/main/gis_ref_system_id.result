@@ -1,0 +1,92 @@
+#
+# MDEV-29952 Spatial References needs better documenting
+#
+# REF_SYSTEM_ID is a column attribute for spatial data types that sets
+# the Spatial Reference System ID (SRID) for geometry columns.
+# Added in MariaDB 10.1.2.
+#
+# Syntax: col_name spatial_type REF_SYSTEM_ID = <integer>
+#
+#
+# 1. Basic usage: SRID is stored and visible in information_schema.geometry_columns
+#
+CREATE TABLE t1 (g GEOMETRY(9,4) REF_SYSTEM_ID=101, pt POINT(8,2), pg GEOMETRY REF_SYSTEM_ID=102);
+SELECT SRID FROM information_schema.geometry_columns
+  WHERE f_table_schema='test' AND g_table_name='t1';
+SRID
+101
+0
+102
+DROP TABLE t1;
+#
+# 2. Columns without REF_SYSTEM_ID default to SRID=0
+#
+CREATE TABLE t1 (g GEOMETRY, pt POINT);
+SELECT F_GEOMETRY_COLUMN, SRID
+  FROM information_schema.geometry_columns
+  WHERE f_table_schema='test' AND f_table_name='t1'
+  ORDER BY F_GEOMETRY_COLUMN;
+F_GEOMETRY_COLUMN	SRID
+g	0
+pt	0
+DROP TABLE t1;
+#
+# 3. REF_SYSTEM_ID=0 is equivalent to omitting REF_SYSTEM_ID (both yield SRID=0)
+#
+CREATE TABLE t1 (a GEOMETRY REF_SYSTEM_ID=0, b GEOMETRY);
+SELECT F_GEOMETRY_COLUMN, SRID
+  FROM information_schema.geometry_columns
+  WHERE f_table_schema='test' AND f_table_name='t1'
+  ORDER BY F_GEOMETRY_COLUMN;
+F_GEOMETRY_COLUMN	SRID
+a	0
+b	0
+DROP TABLE t1;
+#
+# 4. REF_SYSTEM_ID is not allowed on non-spatial data types
+#
+CREATE TABLE t1 (a INT REF_SYSTEM_ID=101);
+ERROR HY000: Data type 'int' doesn't support REF_SYSTEM_ID attribute.
+CREATE TABLE t1 (a VARCHAR(10) REF_SYSTEM_ID=101);
+ERROR HY000: Data type 'varchar' doesn't support REF_SYSTEM_ID attribute.
+#
+# 5. UNION of spatial columns with different non-zero SRIDs is rejected
+#
+CREATE TABLE t1 (a POINT REF_SYSTEM_ID=101, b POINT REF_SYSTEM_ID=102);
+SELECT a FROM t1 UNION SELECT b FROM t1;
+ERROR HY000: Illegal parameter data types `point ref_system_id=101` and `point ref_system_id=102` for operation 'UNION'
+DROP TABLE t1;
+#
+# 6. UNION with SRID=0 (unspecified) and a non-zero SRID is also rejected
+#
+CREATE TABLE t1 (a POINT REF_SYSTEM_ID=0, b POINT REF_SYSTEM_ID=102);
+SELECT a FROM t1 UNION SELECT b FROM t1;
+ERROR HY000: Illegal parameter data types `point ref_system_id=0` and `point ref_system_id=102` for operation 'UNION'
+DROP TABLE t1;
+#
+# 7. UNION of columns with the same non-zero SRID is allowed
+#
+CREATE TABLE t1 (a POINT REF_SYSTEM_ID=101, b POINT REF_SYSTEM_ID=101);
+CREATE TABLE t2 AS SELECT a FROM t1 UNION SELECT b FROM t1;
+DROP TABLE t1, t2;
+#
+# 8. REF_SYSTEM_ID is preserved when adding columns via ALTER TABLE
+#
+CREATE TABLE t1 (g GEOMETRY REF_SYSTEM_ID=101);
+SELECT F_GEOMETRY_COLUMN, SRID
+  FROM information_schema.geometry_columns
+  WHERE f_table_schema='test' AND f_table_name='t1';
+F_GEOMETRY_COLUMN	SRID
+g	101
+ALTER TABLE t1 ADD COLUMN h POINT REF_SYSTEM_ID=202;
+SELECT F_GEOMETRY_COLUMN, SRID
+  FROM information_schema.geometry_columns
+  WHERE f_table_schema='test' AND f_table_name='t1'
+  ORDER BY F_GEOMETRY_COLUMN;
+F_GEOMETRY_COLUMN	SRID
+g	101
+h	202
+DROP TABLE t1;
+#
+# End of MDEV-29952 tests
+#
